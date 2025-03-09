@@ -27,4 +27,13 @@ public class GlobalExceptionHandler {
         // Return the error response with HTTP status 400 (Bad Request)
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
+
+    @ExceptionHandler(AddressNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAddressNotFoundException(AddressNotFoundException ex) {
+        // Create a user-friendly error response
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), List.of());
+
+        // Return the error response with HTTP status 404 (Not Found)
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
 }

@@ -1,6 +1,7 @@
 package com.bridgelebz.addressBook.service;
 
 import com.bridgelebz.addressBook.DTO.AddressDTO;
+import com.bridgelebz.addressBook.exception.AddressNotFoundException;
 import com.bridgelebz.addressBook.model.Address;
 import com.bridgelebz.addressBook.Repository.AddressRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +31,14 @@ public class AddressService {
     }
 
     // Get address by ID
-    public Optional<AddressDTO> getAddressById(Long id) {
+    public AddressDTO getAddressById(Long id) {
         log.info("Fetching address with id: {}", id);
         Optional<Address> address = addressRepository.findById(id);
-        return address.map(this::convertToDTO);
+        if (address.isPresent()) {
+            return convertToDTO(address.get());
+        } else {
+            throw new AddressNotFoundException("Address not found with ID: " + id);
+        }
     }
 
     // Create a new address
@@ -52,7 +57,7 @@ public class AddressService {
 
     // Update an existing address
     @Transactional
-    public Optional<AddressDTO> updateAddress(Long id, AddressDTO addressDTO) {
+    public AddressDTO updateAddress(Long id, AddressDTO addressDTO) {
         log.info("Updating address with id: {}", id);
         Optional<Address> optionalAddress = addressRepository.findById(id);
         if (optionalAddress.isPresent()) {
@@ -65,29 +70,30 @@ public class AddressService {
             address.setPhoneNumber(addressDTO.getPhoneNumber());
             try {
                 address = addressRepository.save(address); // Save updated address to database
-                return Optional.of(convertToDTO(address));
+                return convertToDTO(address);
             } catch (OptimisticLockingFailureException e) {
                 log.error("Concurrent modification detected while updating address with id: {}", id);
                 throw new RuntimeException("Concurrent modification detected. Please retry.");
             }
+        } else {
+            throw new AddressNotFoundException("Address not found with ID: " + id);
         }
-        return Optional.empty();
     }
 
     // Delete an address by ID
     @Transactional
-    public boolean deleteAddress(Long id) {
+    public void deleteAddress(Long id) {
         log.info("Deleting address with id: {}", id);
         if (addressRepository.existsById(id)) {
             try {
                 addressRepository.deleteById(id);
-                return true;
             } catch (OptimisticLockingFailureException e) {
                 log.error("Concurrent modification detected while deleting address with id: {}", id);
                 throw new RuntimeException("Concurrent modification detected. Please retry.");
             }
+        } else {
+            throw new AddressNotFoundException("Address not found with ID: " + id);
         }
-        return false;
     }
 
     // Helper methods to convert between DTO and Entity
