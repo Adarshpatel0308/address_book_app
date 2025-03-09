@@ -2,6 +2,7 @@ package com.bridgelebz.addressBook.service;
 
 import com.bridgelebz.addressBook.DTO.AddressDTO;
 import com.bridgelebz.addressBook.model.Address;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -9,12 +10,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class AddressService {
     private final List<Address> addressList = new ArrayList<>();
     private long nextId = 1; // Simple counter for ID generation
 
     // Get all addresses
     public List<AddressDTO> getAllAddresses() {
+        log.info("Fetching all addresses");
         List<AddressDTO> addressDTOs = new ArrayList<>();
         for (Address address : addressList) {
             addressDTOs.add(convertToDTO(address));
@@ -24,6 +27,7 @@ public class AddressService {
 
     // Get address by ID
     public Optional<AddressDTO> getAddressById(Long id) {
+        log.info("Fetching address with id: {}", id);
         for (Address address : addressList) {
             if (address.getId().equals(id)) {
                 return Optional.of(convertToDTO(address));
@@ -34,6 +38,7 @@ public class AddressService {
 
     // Create a new address
     public AddressDTO createAddress(AddressDTO addressDTO) {
+        log.info("Creating new address: {}", addressDTO);
         Address address = convertToEntity(addressDTO);
         address.setId(nextId++); // Assign the next available ID
         addressList.add(address);
@@ -42,6 +47,7 @@ public class AddressService {
 
     // Update an existing address
     public Optional<AddressDTO> updateAddress(Long id, AddressDTO addressDTO) {
+        log.info("Updating address with id: {}", id);
         for (Address address : addressList) {
             if (address.getId().equals(id)) {
                 address.setFullName(addressDTO.getFullName());
@@ -58,6 +64,7 @@ public class AddressService {
 
     // Delete an address by ID
     public boolean deleteAddress(Long id) {
+        log.info("Deleting address with id: {}", id);
         return addressList.removeIf(address -> address.getId().equals(id));
     }
 
