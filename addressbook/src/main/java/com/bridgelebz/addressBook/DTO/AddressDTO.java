@@ -1,41 +1,15 @@
-package com.bridgelebz.addressBook.model;
+package com.bridgelebz.addressBook.DTO;
 
-import jakarta.persistence.*;
 
-@Entity
-@Table(name = "address_book")
-public class Address {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "full_name")
+public class AddressDTO {
     private String fullName;
-
-    @Column(name = "address")
     private String address;
-
-    @Column(name = "city")
     private String city;
-
-    @Column(name = "state")
     private String state;
-
-    @Column(name = "zip_code")
     private String zipCode;
-
-    @Column(name = "phone_number")
     private String phoneNumber;
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getFullName() {
         return fullName;
     }
