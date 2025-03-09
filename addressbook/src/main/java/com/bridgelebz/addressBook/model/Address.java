@@ -10,7 +10,7 @@ import lombok.Data;
 @Data
 public class Address {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-generate ID
     private Long id;
 
     private String fullName;

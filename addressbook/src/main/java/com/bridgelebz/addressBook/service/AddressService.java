@@ -2,75 +2,98 @@ package com.bridgelebz.addressBook.service;
 
 import com.bridgelebz.addressBook.DTO.AddressDTO;
 import com.bridgelebz.addressBook.model.Address;
+import com.bridgelebz.addressBook.Repository.AddressRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class AddressService {
-    private final List<Address> addressList = new ArrayList<>();
-    private long nextId = 1; // Simple counter for ID generation
+
+    @Autowired
+    private AddressRepository addressRepository;
 
     // Get all addresses
     public List<AddressDTO> getAllAddresses() {
         log.info("Fetching all addresses");
-        List<AddressDTO> addressDTOs = new ArrayList<>();
-        for (Address address : addressList) {
-            addressDTOs.add(convertToDTO(address));
-        }
-        return addressDTOs;
+        List<Address> addresses = addressRepository.findAll();
+        return addresses.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     // Get address by ID
     public Optional<AddressDTO> getAddressById(Long id) {
         log.info("Fetching address with id: {}", id);
-        for (Address address : addressList) {
-            if (address.getId().equals(id)) {
-                return Optional.of(convertToDTO(address));
-            }
-        }
-        return Optional.empty();
+        Optional<Address> address = addressRepository.findById(id);
+        return address.map(this::convertToDTO);
     }
 
     // Create a new address
+    @Transactional
     public AddressDTO createAddress(AddressDTO addressDTO) {
         log.info("Creating new address: {}", addressDTO);
         Address address = convertToEntity(addressDTO);
-        address.setId(nextId++); // Assign the next available ID
-        addressList.add(address);
-        return convertToDTO(address);
+        try {
+            address = addressRepository.save(address); // Save to database
+            return convertToDTO(address);
+        } catch (OptimisticLockingFailureException e) {
+            log.error("Concurrent modification detected while creating address: {}", addressDTO);
+            throw new RuntimeException("Concurrent modification detected. Please retry.");
+        }
     }
 
     // Update an existing address
+    @Transactional
     public Optional<AddressDTO> updateAddress(Long id, AddressDTO addressDTO) {
         log.info("Updating address with id: {}", id);
-        for (Address address : addressList) {
-            if (address.getId().equals(id)) {
-                address.setFullName(addressDTO.getFullName());
-                address.setAddress(addressDTO.getAddress());
-                address.setCity(addressDTO.getCity());
-                address.setState(addressDTO.getState());
-                address.setZipCode(addressDTO.getZipCode());
-                address.setPhoneNumber(addressDTO.getPhoneNumber());
+        Optional<Address> optionalAddress = addressRepository.findById(id);
+        if (optionalAddress.isPresent()) {
+            Address address = optionalAddress.get();
+            address.setFullName(addressDTO.getFullName());
+            address.setAddress(addressDTO.getAddress());
+            address.setCity(addressDTO.getCity());
+            address.setState(addressDTO.getState());
+            address.setZipCode(addressDTO.getZipCode());
+            address.setPhoneNumber(addressDTO.getPhoneNumber());
+            try {
+                address = addressRepository.save(address); // Save updated address to database
                 return Optional.of(convertToDTO(address));
+            } catch (OptimisticLockingFailureException e) {
+                log.error("Concurrent modification detected while updating address with id: {}", id);
+                throw new RuntimeException("Concurrent modification detected. Please retry.");
             }
         }
         return Optional.empty();
     }
 
     // Delete an address by ID
+    @Transactional
     public boolean deleteAddress(Long id) {
         log.info("Deleting address with id: {}", id);
-        return addressList.removeIf(address -> address.getId().equals(id));
+        if (addressRepository.existsById(id)) {
+            try {
+                addressRepository.deleteById(id);
+                return true;
+            } catch (OptimisticLockingFailureException e) {
+                log.error("Concurrent modification detected while deleting address with id: {}", id);
+                throw new RuntimeException("Concurrent modification detected. Please retry.");
+            }
+        }
+        return false;
     }
 
     // Helper methods to convert between DTO and Entity
     private AddressDTO convertToDTO(Address address) {
         AddressDTO dto = new AddressDTO();
+        dto.setId(address.getId());
         dto.setFullName(address.getFullName());
         dto.setAddress(address.getAddress());
         dto.setCity(address.getCity());
@@ -82,6 +105,7 @@ public class AddressService {
 
     private Address convertToEntity(AddressDTO dto) {
         Address address = new Address();
+        // Do not set the ID manually; let the database generate it
         address.setFullName(dto.getFullName());
         address.setAddress(dto.getAddress());
         address.setCity(dto.getCity());

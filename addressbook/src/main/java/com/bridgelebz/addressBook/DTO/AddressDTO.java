@@ -1,10 +1,10 @@
 package com.bridgelebz.addressBook.DTO;
 
-
 import lombok.Data;
 
 @Data
 public class AddressDTO {
+    private Long id;
     private String fullName;
     private String address;
     private String city;
