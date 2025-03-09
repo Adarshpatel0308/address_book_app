@@ -1,13 +1,11 @@
-package com.addressapp.addressbook;
+package com.bridgelebz.addressBook;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AddressbookApplication {
-
+public class AddressBookApplication {
 	public static void main(String[] args) {
-		SpringApplication.run(AddressbookApplication.class, args);
+		SpringApplication.run(AddressBookApplication.class, args);
 	}
-
 }
