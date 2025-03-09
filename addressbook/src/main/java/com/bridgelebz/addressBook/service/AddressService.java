@@ -1,57 +1,64 @@
 package com.bridgelebz.addressBook.service;
 
-
 import com.bridgelebz.addressBook.DTO.AddressDTO;
 import com.bridgelebz.addressBook.model.Address;
-import com.bridgelebz.addressBook.Repository.AddressRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class AddressService {
-    @Autowired
-    private AddressRepository repository;
+    private final List<Address> addressList = new ArrayList<>();
+    private long nextId = 1; // Simple counter for ID generation
 
+    // Get all addresses
     public List<AddressDTO> getAllAddresses() {
-        return repository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        List<AddressDTO> addressDTOs = new ArrayList<>();
+        for (Address address : addressList) {
+            addressDTOs.add(convertToDTO(address));
+        }
+        return addressDTOs;
     }
 
+    // Get address by ID
     public Optional<AddressDTO> getAddressById(Long id) {
-        return repository.findById(id)
-                .map(this::convertToDTO);
+        for (Address address : addressList) {
+            if (address.getId().equals(id)) {
+                return Optional.of(convertToDTO(address));
+            }
+        }
+        return Optional.empty();
     }
 
+    // Create a new address
     public AddressDTO createAddress(AddressDTO addressDTO) {
         Address address = convertToEntity(addressDTO);
-        Address savedAddress = repository.save(address);
-        return convertToDTO(savedAddress);
+        address.setId(nextId++); // Assign the next available ID
+        addressList.add(address);
+        return convertToDTO(address);
     }
 
+    // Update an existing address
     public Optional<AddressDTO> updateAddress(Long id, AddressDTO addressDTO) {
-        return repository.findById(id).map(existing -> {
-            existing.setFullName(addressDTO.getFullName());
-            existing.setAddress(addressDTO.getAddress());
-            existing.setCity(addressDTO.getCity());
-            existing.setState(addressDTO.getState());
-            existing.setZipCode(addressDTO.getZipCode());
-            existing.setPhoneNumber(addressDTO.getPhoneNumber());
-            Address updatedAddress = repository.save(existing);
-            return convertToDTO(updatedAddress);
-        });
+        for (Address address : addressList) {
+            if (address.getId().equals(id)) {
+                address.setFullName(addressDTO.getFullName());
+                address.setAddress(addressDTO.getAddress());
+                address.setCity(addressDTO.getCity());
+                address.setState(addressDTO.getState());
+                address.setZipCode(addressDTO.getZipCode());
+                address.setPhoneNumber(addressDTO.getPhoneNumber());
+                return Optional.of(convertToDTO(address));
+            }
+        }
+        return Optional.empty();
     }
 
+    // Delete an address by ID
     public boolean deleteAddress(Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-            return true;
-        }
-        return false;
+        return addressList.removeIf(address -> address.getId().equals(id));
     }
 
     // Helper methods to convert between DTO and Entity
